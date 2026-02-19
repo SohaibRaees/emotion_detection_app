@@ -4,35 +4,30 @@ import timm
 from torchvision import transforms
 from PIL import Image
 import pandas as pd
-import numpy as np
+from sklearn.metrics.pairwise import cosine_similarity
 
 # =====================================================
-# CONFIG
+# PAGE CONFIG
 # =====================================================
-MODEL_PATH = "vit_emotion_model.pth"
-IMAGE_SIZE = 224
+st.set_page_config(page_title="Emotion Food Recommender",
+                   layout="centered")
+
+st.title("😊 Emotion-Based Food Recommendation System")
+
+# =====================================================
+# MODEL LOAD
+# =====================================================
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-# =====================================================
-# LOAD EMOTION MODEL
-# =====================================================
 @st.cache_resource
 def load_model():
-    checkpoint = torch.load(MODEL_PATH, map_location=DEVICE)
-
-    if "head.weight" in checkpoint:
-        num_classes = checkpoint["head.weight"].shape[0]
-    elif "classifier.weight" in checkpoint:
-        num_classes = checkpoint["classifier.weight"].shape[0]
-    else:
-        raise RuntimeError("Classifier not found")
-
+    checkpoint = torch.load("vit_emotion_model.pth",
+                            map_location=DEVICE)
     model = timm.create_model(
         "vit_base_patch16_224",
         pretrained=False,
-        num_classes=num_classes
+        num_classes=6
     )
-
     model.load_state_dict(checkpoint)
     model.to(DEVICE)
     model.eval()
@@ -40,150 +35,145 @@ def load_model():
 
 model = load_model()
 
-# =====================================================
-# EMOTION LABELS
-# =====================================================
-CLASS_NAMES = ["Ahegao", "Angry", "Happy", "Neutral", "Sad", "Surprise"]
+CLASS_NAMES = ["Ahegao","Angry","Happy",
+               "Neutral","Sad","Surprise"]
 
-# =====================================================
-# IMAGE TRANSFORM
-# =====================================================
 transform = transforms.Compose([
-    transforms.Resize((IMAGE_SIZE, IMAGE_SIZE)),
+    transforms.Resize((224,224)),
     transforms.ToTensor(),
     transforms.Normalize(
-        mean=[0.485, 0.456, 0.406],
-        std=[0.229, 0.224, 0.225]
+        [0.485,0.456,0.406],
+        [0.229,0.224,0.225]
     )
 ])
 
 # =====================================================
-# FOOD DATABASE (PANDAS)
+# DUMMY USER DB
+# =====================================================
+users_db = pd.DataFrame([
+    [1,"Sohaib",["Diabetes"],300],
+    [2,"Ali",[],500],
+    [3,"Ahmed",["Heart"],250],
+],columns=["user_id","name","health","budget"])
+
+user_name = st.selectbox(
+    "Select User Profile",
+    users_db["name"]
+)
+
+user_profile = users_db[
+    users_db["name"]==user_name
+].iloc[0]
+
+# =====================================================
+# FOOD DB
 # =====================================================
 food_db = pd.DataFrame([
-    [1, "Vegetable Soup", "Sad", 120, 3, 3, "Asian", 150],
-    [2, "Chocolate", "Sad", 300, 25, 20, "Western", 250],
-    [3, "Yogurt", "Angry", 90, 4, 2, "Any", 100],
-    [4, "Biryani", "Happy", 450, 5, 25, "Asian", 350],
-    [5, "Fruit Salad", "Neutral", 80, 10, 1, "Any", 120],
-    [6, "Grilled Fish", "Neutral", 200, 2, 8, "Asian", 300],
-    [7, "Burger", "Happy", 500, 6, 30, "Western", 400],
-    [8, "Smoothie", "Angry", 180, 12, 2, "Any", 180],
-    [9, "Rice & Dal", "Neutral", 220, 4, 6, "Asian", 200],
-], columns=["food_id","food","emotion","calories","sugar","fat","cuisine","price"])
+    [1,"Vegetable Soup","Sad",120,3,3,"Asian",150],
+    [2,"Chocolate","Sad",300,25,20,"Western",250],
+    [3,"Yogurt","Angry",90,4,2,"Any",100],
+    [4,"Biryani","Happy",450,5,25,"Asian",350],
+    [5,"Fruit Salad","Neutral",80,10,1,"Any",120],
+    [6,"Grilled Fish","Neutral",200,2,8,"Asian",300],
+    [7,"Burger","Happy",500,6,30,"Western",400],
+    [8,"Smoothie","Angry",180,12,2,"Any",180],
+],columns=["food_id","food","emotion",
+           "calories","sugar","fat",
+           "cuisine","price"])
 
 # =====================================================
-# HEALTH RULES
+# RATINGS
 # =====================================================
+ratings = pd.DataFrame([
+    [1,1,4],[1,3,5],[1,4,4],[1,5,3],
+    [2,2,5],[2,7,4],[2,8,5],[2,6,3],
+    [3,3,4],[3,5,5],[3,4,3],[3,1,4]
+],columns=["user_id","food_id","rating"])
+
+user_item = ratings.pivot_table(
+    index="user_id",
+    columns="food_id",
+    values="rating"
+).fillna(0)
+
 health_rules = {
-    "Diabetes": {"sugar_max": 10},
-    "Heart": {"fat_max": 10},
-    "Obesity": {"calories_max": 300}
+    "Diabetes":{"sugar_max":10},
+    "Heart":{"fat_max":10}
 }
 
-# =====================================================
-# RULE-BASED FILTER
-# =====================================================
-def rule_based_filter(food_db, user, health_rules):
-    # Emotion prioritization
-    preferred = food_db[food_db["emotion"] == user["emotion"]]
-    others = food_db[food_db["emotion"] != user["emotion"]]
-    df = pd.concat([preferred, others])
-
-    # Health filters
-    for cond in user["health_conditions"]:
-        rule = health_rules.get(cond, {})
+def rule_filter(df,user):
+    for cond in user["health"]:
+        rule=health_rules.get(cond,{})
         if "sugar_max" in rule:
-            df = df[df["sugar"] <= rule["sugar_max"]]
+            df=df[df["sugar"]<=rule["sugar_max"]]
         if "fat_max" in rule:
-            df = df[df["fat"] <= rule["fat_max"]]
-        if "calories_max" in rule:
-            df = df[df["calories"] <= rule["calories_max"]]
-
-    # Budget filter
-    df = df[df["price"] <= user["budget"]]
-
+            df=df[df["fat"]<=rule["fat_max"]]
+    df=df[df["price"]<=user["budget"]]
     return df
 
-# =====================================================
-# PREFERENCE SCORING
-# =====================================================
-def preference_score(row, user):
-    score = 0
-    if row["cuisine"] in user["preferred_cuisine"] or row["cuisine"] == "Any":
-        score += 1
-    if row["emotion"] == user["emotion"]:
-        score += 2
-    return score
+def collaborative_group(user_id,candidate_ids):
+    valid=[i for i in candidate_ids
+           if i in user_item.columns]
+    if not valid:
+        return candidate_ids
+    matrix=user_item[valid]
+    sim=cosine_similarity(matrix)
+    sim_df=pd.DataFrame(sim,
+        index=matrix.index,
+        columns=matrix.index)
+    similar=sim_df[user_id]\
+        .sort_values(ascending=False)[1:]
+    scores=pd.Series(dtype=float)
+    for u,s in similar.items():
+        scores=scores.add(matrix.loc[u]*s,
+                          fill_value=0)
+    scores=scores.sort_values(ascending=False)
+    return scores.index.tolist()
 
 # =====================================================
-# STREAMLIT UI
+# CAMERA SNAPSHOT
 # =====================================================
-st.set_page_config(page_title="Emotion-Aware Food Recommendation", layout="centered")
-st.title("😊 Emotion-Aware Food Recommendation System")
+img = st.camera_input("📸 Capture Your Emotion")
 
-# ---------------- IMAGE INPUT ----------------
-uploaded_file = st.file_uploader("Upload Facial Image", type=["jpg","jpeg","png"])
+if img:
 
-if uploaded_file:
-    image = Image.open(uploaded_file).convert("RGB")
-    st.image(image, use_column_width=True)
+    image = Image.open(img).convert("RGB")
+    st.image(image,caption="Captured Image")
 
-    img_tensor = transform(image).unsqueeze(0).to(DEVICE)
+    tensor = transform(image)\
+        .unsqueeze(0).to(DEVICE)
 
     with torch.no_grad():
-        outputs = model(img_tensor)
-        probs = torch.softmax(outputs, dim=1)
-        conf, pred = torch.max(probs, 1)
+        out=model(tensor)
+        pred=torch.argmax(out,1)
 
-    detected_emotion = CLASS_NAMES[pred.item()]
-    st.markdown(f"## 🎭 Detected Emotion: **{detected_emotion}**")
-    st.markdown(f"Confidence: **{conf.item()*100:.2f}%**")
+    emotion = CLASS_NAMES[pred.item()]
+    st.success(f"Detected Emotion: {emotion}")
 
-    # ---------------- USER INPUT ----------------
-    st.markdown("### 👤 User Preferences")
-    budget = st.slider("Budget (PKR)", 100, 500, 200)
-    preferred_cuisine = st.multiselect(
-        "Preferred Cuisine",
-        ["Asian", "Western", "Any"],
-        default=["Asian"]
+    emo_group = food_db[
+        food_db["emotion"]==emotion
+    ]
+
+    filtered = rule_filter(
+        emo_group,
+        user_profile
     )
 
-    st.markdown("### ❤️ Health Conditions")
-    health_conditions = []
-    if st.checkbox("Diabetes"):
-        health_conditions.append("Diabetes")
-    if st.checkbox("Heart Problem"):
-        health_conditions.append("Heart")
-    if st.checkbox("Obesity"):
-        health_conditions.append("Obesity")
+    candidate_ids = filtered["food_id"].tolist()
 
-    user = {
-        "emotion": detected_emotion,
-        "health_conditions": health_conditions,
-        "budget": budget,
-        "preferred_cuisine": preferred_cuisine
-    }
+    rec_ids = collaborative_group(
+        user_profile["user_id"],
+        candidate_ids
+    )
 
-    # ---------------- RECOMMENDATION ----------------
-    st.markdown("### 🍽 Recommended Foods")
+    final = filtered[
+        filtered["food_id"].isin(rec_ids)
+    ]
 
-    filtered_foods = rule_based_filter(food_db, user, health_rules)
+    st.subheader("🍽 Recommended Foods")
 
-    if filtered_foods.empty:
-        st.warning("No food matches your constraints.")
+    if final.empty:
+        st.write("No food found")
     else:
-        filtered_foods["score"] = filtered_foods.apply(
-            lambda row: preference_score(row, user), axis=1
-        )
-        filtered_foods = filtered_foods.sort_values(
-            by="score", ascending=False
-        )
-
-        for _, row in filtered_foods.iterrows():
-            st.write(
-                f"✅ **{row['food']}** | "
-                f"Cuisine: {row['cuisine']} | "
-                f"Price: PKR {row['price']} | "
-                f"Calories: {row['calories']}"
-            )
+        for _,row in final.iterrows():
+            st.write(f"✅ {row['food']} (PKR {row['price']})")
