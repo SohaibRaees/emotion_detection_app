@@ -1,7 +1,10 @@
 streamlit
 torch
-torchvision
 timm
+torchvision
+pillow
 pandas
 numpy
-Pillow
+opencv-python-headless
+scikit-learn
+openpyxl
