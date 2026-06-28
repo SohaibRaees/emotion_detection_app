@@ -21,7 +21,7 @@ DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 @st.cache_resource
 def load_model():
-    checkpoint = torch.load("vit_emotion_model.pth",
+    checkpoint = torch.load("models/vit_emotion_model.pth",
                             map_location=DEVICE)
     model = timm.create_model(
         "vit_base_patch16_224",
