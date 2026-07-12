@@ -24,17 +24,66 @@ st.page_link(
     label="Create New Account"
 )
 
-st.title("🔐 User Login")
-
-email = st.text_input("Email")
-
-password = st.text_input(
-    "Password",
-    type="password"
+from utils.ui import (
+    load_ui,
+    page_intro
 )
 
+load_ui("Login Page")
 
-if st.button("Login"):
+left, right = st.columns([1.3, 1])
+
+with left:
+
+    page_intro(
+        "Welcome Back",
+        "AI Emotion-Aware Food Recommendation System",
+        "🍽"
+    )
+
+    st.markdown("""
+### Why Choose Our System?
+
+✔ AI-Based Emotion Detection
+
+✔ Hybrid Food Recommendation
+
+✔ Nearby Restaurant Recommendation
+
+✔ Live GPS Location
+
+✔ Personalized Experience
+""")
+
+with right:
+
+    st.markdown(
+        '<div class="login-card">',
+        unsafe_allow_html=True
+    )
+
+    st.subheader("🔐 Login")
+
+    email = st.text_input(
+        "Email Address"
+    )
+
+    password = st.text_input(
+        "Password",
+        type="password"
+    )
+
+    login = st.button(
+        "🔓 Login"
+    )
+
+    st.markdown(
+        "</div>",
+        unsafe_allow_html=True
+    )
+
+
+if login:
 
     email = email.strip().lower()
 

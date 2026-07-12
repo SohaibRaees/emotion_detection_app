@@ -37,7 +37,24 @@ if (
 # PAGE CONFIG
 # =====================================================
 
-st.title("🎭 Emotion Detection")
+# st.title("🎭 Emotion Detection")
+from utils.ui import (
+    load_ui,
+    kpi_card,
+    page_intro
+)
+
+load_ui("Emotion Detection")
+
+page_intro(
+
+    "Emotion Detection",
+
+    "Upload or capture an image so our Vision Transformer can detect your emotion.",
+
+    "🎭"
+
+)
 
 # =====================================================
 # CURRENT LOCATION
@@ -66,7 +83,8 @@ if "location_updated" not in st.session_state:
         city = get_city_name(
             lat,
             lon
-)
+        
+        )
 
         st.success("📍 Current Location Updated Successfully")
 
@@ -75,23 +93,17 @@ if "location_updated" not in st.session_state:
         col1, col2 = st.columns(2)
 
         with col1:
-
-            st.metric(
-
-                "Latitude",
-
-                f"{lat:.6f}"
-
+            kpi_card(
+                "📍",
+                "Current City",
+                city
             )
 
         with col2:
-
-            st.metric(
-
-                "Longitude",
-
-                f"{lon:.6f}"
-
+            kpi_card(
+                "👤",
+                "Current User",
+                st.session_state.user_name
             )
 
     else:
@@ -258,20 +270,26 @@ def detect_face(image):
 # INPUT METHOD
 # =====================================================
 
-input_option = st.radio(
-    "Select Image Input Method",
+# input_option = st.radio(
+#     "Select Image Input Method",
+#     [
+#         "Upload Image",
+#         "Capture From Camera"
+#     ]
+# )
+tab1, tab2 = st.tabs(
     [
-        "Upload Image",
-        "Capture From Camera"
+        "📁 Upload Image",
+        "📷 Capture From Camera"
     ]
 )
 
 image = None
 
-if input_option == "Upload Image":
+with tab1:
 
     uploaded_file = st.file_uploader(
-        "Upload Image",
+        "Choose Image",
         type=[
             "jpg",
             "jpeg",
@@ -280,149 +298,207 @@ if input_option == "Upload Image":
     )
 
     if uploaded_file:
+
         image = Image.open(
             uploaded_file
         ).convert("RGB")
 
-else:
+with tab2:
+
     camera_image = st.camera_input(
         "Capture Image"
     )
+
     if camera_image:
+
         image = Image.open(
             camera_image
         ).convert("RGB")
 
+
+
+
+
+# image = None
+
+# if input_option == "Upload Image":
+
+#     uploaded_file = st.file_uploader(
+#         "Upload Image",
+#         type=[
+#             "jpg",
+#             "jpeg",
+#             "png"
+#         ]
+#     )
+
+#     if uploaded_file:
+#         image = Image.open(
+#             uploaded_file
+#         ).convert("RGB")
+
+# else:
+#     camera_image = st.camera_input(
+#         "Capture Image"
+#     )
+#     if camera_image:
+#         image = Image.open(
+#             camera_image
+#         ).convert("RGB")
+
+
+with st.spinner(
+    "🤖 AI is analyzing your facial expression..."
+):
+    progress = st.progress(0)
+
+    for i in range(100):
+
+        progress.progress(i + 1)
+
+    progress.empty()
+    
 # =====================================================
 # PREDICTION
 # =====================================================
 
-if image is not None:
+    if image is not None:
 
-    image = detect_face(image)
-    col1, col2 = st.columns(2)
-    with col1:
-        st.image(
-            image,
-            caption="Detected Face",
-            width=350
+        image = detect_face(image)
+        left, right = st.columns([1.2,1])
+        with left:
+            st.markdown("### 🖼 Uploaded Image")
+            st.image(
+                image,
+                width=350
+            )
+
+        img_tensor = transform(
+            image
+        ).unsqueeze(0).to(DEVICE)
+
+        with torch.no_grad():
+            outputs = model(
+                img_tensor
+            )
+
+        probs = torch.softmax(
+            outputs,
+            dim=1
         )
 
-    img_tensor = transform(
-        image
-    ).unsqueeze(0).to(DEVICE)
-
-    with torch.no_grad():
-        outputs = model(
-            img_tensor
+        conf, pred = torch.max(
+            probs,
+            1
         )
 
-    probs = torch.softmax(
-        outputs,
-        dim=1
-    )
+        detected_emotion = CLASS_NAMES[
+            pred.item()
+        ]
 
-    conf, pred = torch.max(
-        probs,
-        1
-    )
+        # =====================================
+        # AHEGAO -> FEAR
+        # =====================================
 
-    detected_emotion = CLASS_NAMES[
-        pred.item()
-    ]
+        if detected_emotion == "Ahegao":
 
-    # =====================================
-    # AHEGAO -> FEAR
-    # =====================================
+            detected_emotion = "Fear"
 
-    if detected_emotion == "Ahegao":
-
-        detected_emotion = "Fear"
-
-    confidence = float(
-        conf.item()
-    )
-
-    with col2:
-
-        st.success(
-            f"🎭 Detected Emotion: {detected_emotion}"
+        confidence = float(
+            conf.item()
         )
 
-        st.info(
-            f"Confidence: {confidence*100:.2f}%"
+        with right:
+
+            st.markdown("### 🤖 AI Prediction")
+
+            kpi_card(
+                "😊",
+                "Detected Emotion",
+                detected_emotion,
+                "success"
+            )
+
+            kpi_card(
+                "🎯",
+                "Confidence",
+                f"{confidence*100:.2f}%",
+                "warning"
+            )
+            
+            st.progress(
+                confidence
+            )
+
+        # =====================================
+        # SAVE TO SESSION
+        # =====================================
+
+        st.session_state.emotion = (
+            detected_emotion
         )
 
-    # =====================================
-    # SAVE TO SESSION
-    # =====================================
-
-    st.session_state.emotion = (
-        detected_emotion
-    )
-
-    st.session_state.confidence = (
-        confidence
-    )
-
-    # =====================================
-    # SAVE BUTTON
-    # =====================================
-
-    if st.button(
-        "💾 Save Emotion"
-    ):
-        emotion_id = execute_insert(
-        """
-        INSERT INTO Emotion_History
-        (
-            user_id,
-            emotion,
+        st.session_state.confidence = (
             confidence
         )
-        VALUES
-        (%s,%s,%s)
-        """,
-        (
-        st.session_state.user_id,
-        detected_emotion,
-        confidence
-        )
-        )
 
-        st.session_state.emotion_id = emotion_id
+        # =====================================
+        # SAVE BUTTON
+        # =====================================
+        left, right = st.columns(2)
+        with left:
+            if st.button(
+                "💾 Save Emotion"
+            ):
+                emotion_id = execute_insert(
+                """
+                INSERT INTO Emotion_History
+                (
+                    user_id,
+                    emotion,
+                    confidence
+                )
+                VALUES
+                (%s,%s,%s)
+                """,
+                (
+                st.session_state.user_id,
+                detected_emotion,
+                confidence
+                )
+                )
 
-        st.session_state.emotion = detected_emotion
+                st.session_state.emotion_id = emotion_id
 
-        st.session_state.confidence = confidence
+                st.session_state.emotion = detected_emotion
 
-        st.success(
-            f"Emotion saved successfully."
-        )
+                st.session_state.confidence = confidence
 
-        st.info(
-            f"""
-            Emotion ID: {emotion_id}
+                st.success(
+                    f"✅ Emotion saved successfully."
+                )
 
-            Emotion: {detected_emotion}
+                st.info(
+                    f"""
+                    Emotion: {detected_emotion}
 
-            Confidence: {confidence*100:.2f}%
-            """ 
-        )
- 
-    # =====================================
-    # CONTINUE
-    # =====================================
+                    Confidence: {confidence*100:.2f}%
+                    """ 
+                )
+    
+        # =====================================
+        # CONTINUE
+        # =====================================
+        with right:
+            if st.button(
+                "➡ Continue To Food Recommendation"
+            ):
+                if "emotion_id" not in st.session_state:
+                    st.error(
+                        "Please save the emotion first."
+                    )
 
-    if st.button(
-        "➡ Continue To Food Recommendation"
-    ):
-        if "emotion_id" not in st.session_state:
-            st.error(
-                "Please save the emotion first."
-            )
-
-        else:
-            st.switch_page(
-                "pages/4_Food_Recommendation.py"
-            )
+                else:
+                    st.switch_page(
+                        "pages/4_Food_Recommendation.py"
+                    )

@@ -11,21 +11,19 @@ import pandas as pd
 # CREATE DATABASE CONNECTION
 # =====================================================
 
+import mysql.connector
+import streamlit as st
+
 def get_connection():
-    """
-    Returns a MySQL database connection.
-    """
-
     connection = mysql.connector.connect(
-        host="localhost",
-        user="root",
-        password="sohaib12",
-        database="emotion_food_recommendation"
+        host=st.secrets["DB_HOST"],
+        port=int(st.secrets["DB_PORT"]),
+        user=st.secrets["DB_USER"],
+        password=st.secrets["DB_PASSWORD"],
+        database=st.secrets["DB_NAME"],
+        ssl_ca=st.secrets["DB_SSL_CA"]
     )
-
     return connection
-
-
 # =====================================================
 # FETCH DATA (SELECT QUERIES)
 # =====================================================

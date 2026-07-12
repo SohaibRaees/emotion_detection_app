@@ -1,0 +1,757 @@
+/* =====================================================
+   GOOGLE FONT
+===================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+html,
+body,
+[class*="css"]{
+
+    font-family: 'Poppins', sans-serif;
+
+}
+
+/* =====================================================
+   MAIN APP
+===================================================== */
+
+.stApp{
+
+    background:#f36b46;
+
+}
+
+/* =====================================================
+   TITLES
+===================================================== */
+
+h1{
+
+    color:#2563EB;
+
+    font-weight:700;
+
+}
+
+h2{
+
+    color:#334155;
+
+}
+
+h3{
+
+    color:#475569;
+
+}
+
+/* =====================================================
+   BUTTONS
+===================================================== */
+
+.stButton>button{
+
+    width:100%;
+
+    background:linear-gradient(
+        90deg,
+        #2563EB,
+        #7C3AED
+    );
+
+    color:white;
+
+    border:none;
+
+    border-radius:10px;
+
+    padding:14px;
+
+    font-size:16px;
+
+    font-weight:600;
+
+    transition:0.3s;
+
+}
+
+.stButton>button:hover{
+
+    transform:translateY(-2px);
+
+    box-shadow:0 8px 18px rgba(0,0,0,.18);
+
+}
+
+/* =====================================================
+   TEXT INPUT
+===================================================== */
+
+.stTextInput input{
+
+    border-radius:10px;
+
+    border:2px solid #CBD5E1;
+
+    padding:10px;
+
+}
+
+.stTextInput input:focus{
+
+    border:2px solid #2563EB;
+
+}
+
+/* =====================================================
+   SELECTBOX
+===================================================== */
+
+.stSelectbox{
+
+    border-radius:10px;
+
+}
+
+/* =====================================================
+   SLIDER
+===================================================== */
+
+.stSlider{
+
+    padding-top:10px;
+
+    padding-bottom:10px;
+
+}
+
+/* =====================================================
+   METRIC CARDS
+===================================================== */
+
+div[data-testid="metric-container"]{
+
+    background:white;
+
+    border-radius:15px;
+
+    padding:18px;
+
+    border:1px solid #E2E8F0;
+
+    box-shadow:0 4px 12px rgba(0,0,0,.05);
+
+}
+
+/* =====================================================
+   DATAFRAME
+===================================================== */
+
+[data-testid="stDataFrame"]{
+
+    border-radius:12px;
+
+}
+
+/* =====================================================
+   ALERTS
+===================================================== */
+
+.stSuccess{
+
+    border-radius:10px;
+
+}
+
+.stWarning{
+
+    border-radius:10px;
+
+}
+
+.stInfo{
+
+    border-radius:10px;
+
+}
+
+/* =====================================================
+   SIDEBAR
+===================================================== */
+
+section[data-testid="stSidebar"]{
+
+    background:linear-gradient(
+        180deg,
+        #1E3A8A,
+        #312E81
+    );
+
+    color:white;
+
+}
+
+section[data-testid="stSidebar"] *{
+
+    color:white !important;
+
+}
+
+/* =====================================================
+   SCROLL BAR
+===================================================== */
+
+::-webkit-scrollbar{
+
+    width:10px;
+
+}
+
+::-webkit-scrollbar-thumb{
+
+    background:#2563EB;
+
+    border-radius:20px;
+
+}
+
+/* =====================================================
+   CUSTOM CARD
+===================================================== */
+
+.custom-card{
+
+    background:rgba(255, 255, 255, 0.153);
+
+    padding:20px;
+
+    border-radius:18px;
+
+    box-shadow:0 8px 22px rgba(0,0,0,.08);
+
+    margin-bottom:20px;
+
+    transition:.3s;
+
+}
+
+.custom-card:hover{
+
+    transform:translateY(-5px);
+
+}
+
+/* =====================================================
+   SECTION HEADER
+===================================================== */
+
+.section-header{
+
+    font-size:30px;
+
+    font-weight:700;
+
+    color:#1E293B;
+
+    margin-bottom:20px;
+
+}
+
+/* ==============================================
+SIDEBAR NAVIGATION
+============================================== */
+
+section[data-testid="stSidebar"]{
+
+    background:linear-gradient(
+    180deg,
+    #1E3A8A,
+    #312E81);
+
+}
+
+section[data-testid="stSidebar"] button{
+
+    border-radius:10px;
+
+}
+
+section[data-testid="stSidebar"] hr{
+
+    border:1px solid rgba(
+        255,
+        255,
+        255,
+        .15
+    );
+
+}
+
+/* =====================================================
+RESTAURANT CARD
+===================================================== */
+
+.restaurant-card{
+
+    background:rgba(255, 255, 255, 0.153);
+
+    border-radius:20px;
+
+    padding:18px;
+
+    margin-bottom:18px;
+
+    box-shadow:0 8px 25px rgba(0,0,0,.08);
+
+    transition:.3s;
+
+    border-left:8px solid #2563EB;
+
+}
+
+.restaurant-card:hover{
+
+    transform:translateY(-4px);
+
+    box-shadow:0 14px 35px rgba(0,0,0,.15);
+
+}
+
+.restaurant-title{
+
+    font-size:24px;
+
+    font-weight:700;
+
+    color:#1E293B;
+
+}
+
+.restaurant-food{
+
+    color:#64748B;
+
+    font-size:17px;
+
+}
+
+.badge{
+
+    background:#EEF2FF;
+
+    color:#2563EB;
+
+    padding:6px 12px;
+
+    border-radius:30px;
+
+    display:inline-block;
+
+    margin:3px;
+
+    font-size:14px;
+
+    font-weight:600;
+
+}
+
+.match-score{
+
+    font-size:32px;
+
+    font-weight:700;
+
+    color:#16A34A;
+
+}
+
+.progress{
+
+    width:100%;
+
+    height:10px;
+
+    border-radius:20px;
+
+    background:#E2E8F0;
+
+    overflow:hidden;
+
+}
+
+.progress-fill{
+
+    height:100%;
+
+    background:linear-gradient(
+    90deg,
+    #16A34A,
+    #22C55E);
+
+}
+
+
+/* =====================================================
+KPI CARDS
+===================================================== */
+
+.kpi-card{
+
+    background:rgba(255, 255, 255, 0.153);
+
+    border-radius:18px;
+
+    padding:20px;
+
+    box-shadow:0 8px 24px rgba(0,0,0,.08);
+
+    transition:.3s;
+
+    border:1px solid #E2E8F0;
+
+    text-align:center;
+
+}
+
+.kpi-card:hover{
+
+    transform:translateY(-5px);
+
+    box-shadow:0 12px 30px rgba(37,99,235,.18);
+
+}
+
+.kpi-icon{
+
+    font-size:34px;
+
+    margin-bottom:10px;
+
+}
+
+.kpi-title{
+
+    font-size:15px;
+
+    color:#64748B;
+
+    font-weight:600;
+
+}
+
+.kpi-value{
+
+    font-size:28px;
+
+    font-weight:700;
+
+    color:#2563EB;
+
+    margin-top:8px;
+
+}
+
+.kpi-success{
+
+    color:#16A34A;
+
+}
+
+.kpi-warning{
+
+    color:#F59E0B;
+
+}
+
+.kpi-danger{
+
+    color:#DC2626;
+
+}
+
+/* =====================================================
+FORM CONTAINER
+===================================================== */
+
+.form-card{
+
+    background:white;
+
+    padding:35px;
+
+    border-radius:25px;
+
+    box-shadow:0 12px 30px rgba(0,0,0,.08);
+
+    margin-bottom:30px;
+
+}
+
+/* =====================================================
+LOGIN CARD
+===================================================== */
+
+.login-card{
+
+    background:rgb(55, 174, 224);
+
+    border-radius:25px;
+
+    padding:40px;
+
+    box-shadow:0 12px 30px rgba(0,0,0,.12);
+
+}
+
+/* =====================================================
+SECTION TITLE
+===================================================== */
+
+.page-title{
+
+    font-size:34px;
+
+    font-weight:700;
+
+    color:#498af4;
+
+}
+
+.page-subtitle{
+
+    color:#3d83e6;
+
+    font-size:16px;
+
+    margin-bottom:25px;
+
+}
+
+/* =====================================================
+UPLOAD BOX
+===================================================== */
+
+[data-testid="stFileUploader"]{
+
+    border:2px dashed #2563EB;
+
+    border-radius:18px;
+
+    padding:25px;
+
+    background:#F8FAFC;
+
+}
+
+/* =====================================================
+CAMERA
+===================================================== */
+
+[data-testid="stCameraInput"]{
+
+    border-radius:18px;
+
+    border:2px solid #2563EB;
+
+    padding:15px;
+
+    background:rgba(255, 255, 255, 0.153);
+
+}
+
+/* =====================================================
+RADIO BUTTON
+===================================================== */
+
+div[role="radiogroup"]{
+
+    background:rgba(255, 255, 255, 0.153);
+
+    padding:15px;
+
+    border-radius:15px;
+
+    border:1px solid #E2E8F0;
+
+}
+
+/* =====================================================
+CHECKBOX
+===================================================== */
+
+[data-testid="stCheckbox"]{
+
+    background:rgba(255, 255, 255, 0.153);
+
+    padding:10px;
+
+    border-radius:12px;
+
+}
+
+/* =====================================================
+PROGRESS BAR
+===================================================== */
+
+.stProgress>div>div{
+
+    background:linear-gradient(
+        90deg,
+        #2563EB,
+        #7C3AED
+    );
+
+}
+
+/* =====================================================
+FOOD RECOMMENDATION CARD
+===================================================== */
+
+.food-card{
+
+    background:rgba(255, 255, 255, 0.153);
+
+    border-radius:20px;
+
+    padding:20px;
+
+    margin-bottom:18px;
+
+    box-shadow:0 8px 24px rgba(0,0,0,.08);
+
+    border-left:8px solid #16A34A;
+
+    transition:.3s;
+
+}
+
+.food-card:hover{
+
+    transform:translateY(-4px);
+
+    box-shadow:0 14px 35px rgba(0,0,0,.16);
+
+}
+
+.food-title{
+
+    font-size:24px;
+
+    font-weight:700;
+
+    color:#1E293B;
+
+}
+
+.food-score{
+
+    font-size:30px;
+
+    font-weight:700;
+
+    color:#01481b;
+
+}
+
+.food-badge{
+
+    display:inline-block;
+
+    padding:6px 12px;
+
+    margin:4px;
+
+    border-radius:25px;
+
+    background:#EFF6FF;
+
+    color:#2563EB;
+
+    font-size:13px;
+
+    font-weight:600;
+
+}
+
+.food-progress{
+
+    width:100%;
+
+    height:9px;
+
+    border-radius:20px;
+
+    background:#E5E7EB;
+
+    overflow:hidden;
+
+}
+
+.food-progress-fill{
+
+    height:100%;
+
+    background:linear-gradient(
+        90deg,
+        #22C55E,
+        #16A34A
+    );
+
+}
+
+/* =====================================================
+MAP
+=====================================================*/
+
+iframe{
+
+    border-radius:20px;
+
+}
+
+/* =====================================================
+LEGEND TABLE
+=====================================================*/
+
+table{
+
+    width:100%;
+
+    border-collapse:collapse;
+
+}
+
+th{
+
+    background:#2563EB;
+
+    color:rgb(2, 85, 121);
+
+    padding:10px;
+
+}
+
+td{
+
+    padding:10px;
+
+    border-bottom:1px rgb(2, 85, 121);
+
+}
+
+/* =====================================================
+MAP POPUP
+=====================================================*/
+
+.leaflet-popup-content{
+
+    font-family:Poppins;
+
+}
+
+.leaflet-container{
+
+    border-radius:20px;
+
+}

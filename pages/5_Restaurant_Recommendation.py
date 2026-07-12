@@ -34,7 +34,23 @@ if "user_id" not in st.session_state:
 
 user_id = st.session_state.user_id
 
-st.title("🍴 Nearby Restaurant Recommendations")
+from utils.ui import (
+    load_ui,
+    page_header,
+    page_intro
+)
+
+load_ui("Restaurant Recommendations")
+
+page_intro(
+
+    "Restaurant Recommendation",
+
+    "Discover nearby restaurants ofAfering your recommended meals.",
+
+    "🍴"
+
+)
 
 # =====================================================
 # USER LOCATION
@@ -51,28 +67,11 @@ if user_lat is None:
 
     st.stop()
 
-city = get_city_name(user_lat, user_lon)
-
-st.success("📍 Current Location")
-st.info(f"🏙 City: {city}")
-
-col1, col2 = st.columns(2)
-
-with col1:
-    st.metric(
-        "Latitude",
-        f"{user_lat:.6f}"
-    )
-
-with col2:
-    st.metric(
-        "Longitude",
-        f"{user_lon:.6f}"
-    )
 
 # =====================================================
 # LOAD LATEST RECOMMENDATION SESSION
 # =====================================================
+
 
 history = fetch_data(f"""
 SELECT *
@@ -94,10 +93,6 @@ history_id = int(
     history.iloc[0]["history_id"]
 )
 
-# =====================================================
-# LOAD TOP RECOMMENDED FOODS
-# =====================================================
-
 recommended_foods = fetch_data(f"""
 SELECT
 
@@ -115,54 +110,52 @@ JOIN Foods f
 
 ON ri.food_id=f.food_id
 
-WHERE ri.history_id={history_id}
+WHERE history_id={history_id}
 
-ORDER BY ri.rank_position
+ORDER BY rank_position
 """)
 
-# =====================================================
-# LOAD RESTAURANTS
-# =====================================================
-
 restaurants = fetch_data("""
+
 SELECT *
+
 FROM Restaurants
+
 WHERE is_active=1
+
 """)
 
 restaurant_foods = fetch_data("""
+
 SELECT *
+
 FROM Restaurant_Foods
+
 WHERE is_available=1
+
 """)
 
-# =====================================================
-# RESTAURANTS SERVING RECOMMENDED FOODS
-# =====================================================
-
 candidate_restaurants = (
+
     restaurant_foods
+
     .merge(
+
         recommended_foods,
+
         on="food_id"
+
     )
+
     .merge(
+
         restaurants,
+
         on="restaurant_id"
+
     )
+
 )
-
-if candidate_restaurants.empty:
-
-    st.warning(
-        "No nearby restaurants found."
-    )
-
-    st.stop()
-
-# =====================================================
-# DISTANCE CALCULATION
-# =====================================================
 
 candidate_restaurants = add_distance_to_restaurants(
 
@@ -174,39 +167,141 @@ candidate_restaurants = add_distance_to_restaurants(
 
 )
 
+AVERAGE_CITY_SPEED = 30
+
+candidate_restaurants["travel_time"]=(
+
+candidate_restaurants["distance_km"]
+
+/
+
+AVERAGE_CITY_SPEED
+
+)*60
+
+candidate_restaurants["travel_time"]=(
+
+candidate_restaurants["travel_time"]
+
+.round()
+
+.astype(int)
+
+)
+
+closest_distance = candidate_restaurants["distance_km"].min()
+
+closest_name = candidate_restaurants.loc[
+    candidate_restaurants["distance_km"].idxmin(),
+    "restaurant_name"
+]
+
+city = get_city_name(user_lat, user_lon)
+
+st.success("📍 Current Location")
+st.info(f"🏙 City: {city}")
+
+col1,col2,col3,col4=st.columns(4)
+
+with col1:
+
+    st.metric(
+
+        "📍 Current City",
+
+        city
+
+    )
+
+with col2:
+
+    st.metric(
+
+        "🍴 Restaurants",
+
+        len(candidate_restaurants)
+
+    )
+
+with col3:
+
+    st.metric(
+
+        "📍 Closest",
+
+        f"{closest_distance:.1f} KM"
+
+    )
+
+with col4:
+
+    st.metric(
+
+        "⭐ Best Rating",
+
+        f"{candidate_restaurants['average_rating'].max():.1f}"
+
+    )
+
+st.markdown("---")
+
 # =====================================================
 # FILTER BY DISTANCE
 # =====================================================
 
-MAX_DISTANCE = st.slider(
+with st.expander(
 
-    "Maximum Distance (KM)",
+    "⚙ Recommendation Settings",
 
-    50,
+    expanded=False
 
-    200,
+):
 
-    120
+    MAX_DISTANCE=st.slider(
 
-)
+        "Maximum Distance (KM)",
 
-candidate_restaurants = filter_nearby_restaurants(
+        1,
 
-    candidate_restaurants,
+        200,
 
-    MAX_DISTANCE
-
-)
-
-if candidate_restaurants.empty:
-
-    st.warning(
-
-        f"No restaurants found within {MAX_DISTANCE} KM."
+        50
 
     )
 
-    st.stop()
+    min_rating=st.slider(
+
+        "Minimum Restaurant Rating",
+
+        1.0,
+
+        5.0,
+
+        3.5,
+
+        step=0.1
+
+    )
+
+    delivery_only=st.checkbox(
+
+        "Delivery Only",
+
+        False
+
+    )
+
+# -------
+
+candidate_restaurants=filter_nearby_restaurants(
+    candidate_restaurants,MAX_DISTANCE)
+
+candidate_restaurants=candidate_restaurants[
+    candidate_restaurants["average_rating"] >= min_rating]
+
+if delivery_only:
+    candidate_restaurants=candidate_restaurants[
+    candidate_restaurants["offers_delivery"]==1]
 
 # =====================================================
 # TRAVEL TIME
@@ -237,37 +332,53 @@ candidate_restaurants["travel_time"] = (
 # =====================================================
 # RESTAURANT AGGREGATION
 # =====================================================
+restaurant_scores=(
 
-restaurant_scores = (
-    candidate_restaurants
-    .groupby(
-        [
-            "restaurant_id",
-            "restaurant_name",
-            "average_rating",
-            "average_price_pkr",
-            "avg_delivery_time",
-            "offers_delivery",
-            "distance_km",
-            "travel_time"
-        ],
-        as_index=False
-    )
-    .agg(
-        {
-            "final_score": "mean",
-            "food_name": "first",
-            "food_id": "first",
-            "latitude": "first",
-            "longitude": "first"
-        
-        }
-    )
+candidate_restaurants
+
+.groupby(
+
+[
+
+"restaurant_id",
+
+"restaurant_name",
+
+"average_rating",
+
+"average_price_pkr",
+
+"avg_delivery_time",
+
+"offers_delivery",
+
+"distance_km",
+
+"travel_time"
+
+],
+
+as_index=False
+
 )
 
-st.info(
+.agg(
 
-    f"Found {len(restaurant_scores)} nearby restaurants."
+{
+
+"food_name":"first",
+
+"food_id":"first",
+
+"latitude":"first",
+
+"longitude":"first",
+
+"final_score":"mean"
+
+}
+
+)
 
 )
 
@@ -425,35 +536,61 @@ restaurant_scores["reason"] = restaurant_scores.apply(
 
 )
 
-# # =====================================================
-# # DISPLAY
-# # =====================================================
 
-# st.subheader(
-#     "🏆 Top Restaurants"
-# )
 
-# st.dataframe(
-#     restaurant_scores[
-#         [
-#             "restaurant_name",
-#             "average_rating",
-#             "average_price_pkr",
-#             "avg_delivery_time",
-#             "offers_delivery",
-#             "topsis_score"
-#         ]
-#     ],
-#     use_container_width=True
-# )
+#  Restaurant Recommendation Statistics
 
+col1,col2,col3,col4=st.columns(4)
+
+with col1:
+
+    st.metric(
+
+        "🏆 Best Match",
+
+        f"{restaurant_scores.iloc[0]['match_score']:.1f}%"
+
+    )
+
+with col2:
+
+    st.metric(
+
+        "⭐ Highest Rating",
+
+        restaurant_scores["average_rating"].max()
+
+    )
+
+with col3:
+
+    st.metric(
+
+        "📍 Closest",
+
+        f"{restaurant_scores['distance_km'].min():.1f} KM"
+
+    )
+
+with col4:
+
+    st.metric(
+
+        "🚗 Fastest",
+
+        f"{restaurant_scores['travel_time'].min()} mins"
+
+    )
+
+st.markdown("---")
 
 # =====================================================
-# PROFESSIONAL RESTAURANT CARDS
+# PREMIUM RESTAURANT CARDS
 # =====================================================
 
 st.markdown("---")
-st.subheader("🏆 Top Nearby Restaurant Recommendations")
+
+st.subheader("🍴 Best Restaurants For You")
 
 medals = [
     "🥇",
@@ -476,120 +613,191 @@ for rank, (_, row) in enumerate(
     medal = medals[rank-1]
 
     delivery = (
-        "Available ✅"
+        "🚚 Delivery Available"
         if row["offers_delivery"] == 1
         else
-        "Not Available ❌"
+        "🏪 Pickup Only"
     )
 
-    # -----------------------------------
-    # Explainability
-    # -----------------------------------
+    badges = []
 
-    reasons = []
+    if row["distance_km"] <= 3:
+        badges.append("📍 Nearby")
 
-    if row["distance_km"] <= 50:
-        reasons.append("📍 Near your location")
+    elif row["distance_km"] <= 7:
+        badges.append("🚗 Short Drive")
 
-    if row["average_rating"] >= 4.5:
-        reasons.append("⭐ Highly rated")
+    else:
+        badges.append("🛣 Long Distance")
 
-    if row["avg_delivery_time"] <= 45:
-        reasons.append("🚚 Fast delivery")
+    if row["average_rating"] >= 4.7:
+        badges.append("⭐ Highly Rated")
 
-    if row["average_price_pkr"] <= 1000:
-        reasons.append("💰 Budget friendly")
+    elif row["average_rating"] >= 4.3:
+        badges.append("👍 Popular")
 
-    reasons.append("🍽 Matches your recommended food")
+    if row["avg_delivery_time"] <= 25:
+        badges.append("⚡ Fast Delivery")
 
-    explanation = "<br>".join(reasons)
+    if row["average_price_pkr"] <= 900:
+        badges.append("💰 Affordable")
 
-    # -----------------------------------
-    # Card
-    # -----------------------------------
+    badges.append("❤️ Emotion Match")
+
+    badge_html = "".join(
+        [
+            f"<span class='badge'>{badge}</span>"
+            for badge in badges
+        ]
+    )
+
+    progress = min(
+        row["match_score"],
+        100
+    )
 
     st.markdown(
         f"""
-<div style="
-background-color:#FFOOFF;
-padding:22px;
-border-radius:15px;
-margin-bottom:20px;
-box-shadow:0px 5px 18px rgba(0,0,0,0.12);
-border-left:8px solid #ff6b35;
-">
+<div class="restaurant-card">
 
-<h2>{medal} {row['restaurant_name']}</h2>
+<div style="display:flex;justify-content:space-between;align-items:center;">
 
-<hr>
+<div>
 
-<b>🍔 Recommended Food</b><br>
-{row['food_name']}
+<div class="restaurant-title">
 
-<br><br>
+{medal} {row['restaurant_name']}
 
-<b>📍 Distance</b><br>
-{row['distance_km']:.2f} KM away
+</div>
 
-<br><br>
+<div class="restaurant-food">
 
-<b>🚗 Estimated Drive Time</b><br>
-{row['travel_time']} minutes
+🍔 Recommended Food:
+<b>{row['food_name']}</b>
 
-<br><br>
+</div>
 
-<b>⭐ Restaurant Rating</b><br>
-{row['average_rating']} / 5
+</div>
 
-<br><br>
+<div class="match-score">
 
-<b>💰 Average Price</b><br>
-PKR {row['average_price_pkr']:.0f}
+{row['match_score']:.1f}%
 
-<br><br>
+</div>
 
-<b>🚚 Delivery</b><br>
-{delivery}
-
-<br><br>
-
-<b>⏱ Average Delivery Time</b><br>
-{row['avg_delivery_time']} minutes
-
-<br><br>
-
-<b>🏆 Match Score</b><br>
-
-<span style="
-font-size:26px;
-font-weight:bold;
-color:#00FFFF;
-">
-{row['match_score']}%
-</span>
-
-<br><br>
-
-<b>💡 Why Recommended?</b>
+</div>
 
 <br>
 
-{explanation}
+<div style="
+display:flex;
+justify-content:space-between;
+flex-wrap:wrap;
+font-size:15px;
+">
+
+<div>
+
+📍 <b>{row['distance_km']:.1f} km</b>
 
 </div>
+
+<div>
+
+🚗 <b>{row['travel_time']} min</b>
+
+</div>
+
+<div>
+
+⭐ <b>{row['average_rating']}</b>
+
+</div>
+
+<div>
+
+💰 <b>PKR {row['average_price_pkr']:.0f}</b>
+
+</div>
+
+<div>
+
+🚚 <b>{row['avg_delivery_time']} min</b>
+
+</div>
+
+</div>
+
+<br>
+
+<div class="progress">
+
+<div
+
+class="progress-fill"
+
+style="width:{progress}%">
+
+</div>
+
+</div>
+
+<br>
+
+{badge_html}
+
+<br><br>
+
+<div style="
+display:flex;
+justify-content:space-between;
+align-items:center;
+">
+
+<div>
+
+<b>Recommendation Reason</b>
+
+<br>
+
+<small>
+
+{row['reason']}
+
+</small>
+
+</div>
+
+<div style="
+font-size:15px;
+font-weight:bold;
+color:#16A34A;
+">
+
+🏆 TOPSIS Score
+
+<br>
+
+{row['topsis_score']:.4f}
+
+</div>
+
+</div>
+
+</div>
+
 """,
         unsafe_allow_html=True
     )
 
-    # -----------------------------------
-    # Save Restaurant ID
-    # -----------------------------------
-
     execute_query(
         """
         UPDATE Recommendation_Items
+
         SET restaurant_id=%s
+
         WHERE history_id=%s
+
         AND food_id=%s
         """,
         (
@@ -600,12 +808,27 @@ color:#00FFFF;
     )
 
 # =====================================================
-# INTERACTIVE RESTAURANT MAP
+# INTERACTIVE MAP SECTION
 # =====================================================
 
 st.markdown("---")
 
-st.subheader("🗺 Nearby Restaurants Map")
+st.markdown("""
+<div class="section-header">
+
+🗺 Nearby Restaurant Map
+
+</div>
+
+<div style="color:#64748B;
+margin-bottom:15px;">
+
+Explore recommended restaurants around your current location.
+Click any marker to view detailed information.
+
+</div>
+""",
+unsafe_allow_html=True)
 
 # -----------------------------------------
 # Create Map
@@ -695,44 +918,75 @@ for rank, (_, row) in enumerate(
 
         medal = f"#{rank}"
 
-    popup_html = f"""
-    <h4>{medal} {row['restaurant_name']}</h4>
+    popup_html=f"""
 
-    <hr>
+        <div style="width:250px">
 
-    <b>🍔 Recommended Food</b><br>
-    {row['food_name']}
+        <h3>
 
-    <br><br>
+        {medal}
 
-    <b>📍 Distance</b><br>
-    {row['distance_km']:.2f} KM
+        {row['restaurant_name']}
 
-    <br><br>
+        </h3>
 
-    <b>🚗 Estimated Drive Time</b><br>
-    {row['travel_time']} mins
+        <hr>
 
-    <br><br>
+        <b>🍔 Recommended Food</b>
 
-    <b>⭐ Rating</b><br>
-    {row['average_rating']} / 5
+        <br>
 
-    <br><br>
+        {row['food_name']}
 
-    <b>💰 Average Price</b><br>
-    PKR {row['average_price_pkr']:.0f}
+        <br><br>
 
-    <br><br>
+        <b>📍 Distance</b>
 
-    <b>🏆 Match Score</b><br>
+        <br>
 
-    <span style="font-size:20px;
-                 color:green;
-                 font-weight:bold;">
+        {row['distance_km']:.1f} KM
+
+        <br><br>
+
+        <b>🚗 Travel Time</b>
+
+        <br>
+
+        {row['travel_time']} Minutes
+
+        <br><br>
+
+        <b>⭐ Rating</b>
+
+        <br>
+
+        {row['average_rating']}
+
+        <br><br>
+
+        <b>💰 Average Price</b>
+
+        <br>
+
+        PKR {row['average_price_pkr']:.0f}
+
+        <br><br>
+
+        <b>🏆 Match Score</b>
+
+        <br>
+
+        <span style="font-size:22px;
+        font-weight:bold;
+        color:#16A34A">
+
         {row['match_score']}%
-    </span>
-    """
+
+        </span>
+
+        </div>
+
+"""
 
     folium.Marker(
 
@@ -797,45 +1051,112 @@ for _, row in restaurant_scores.head(10).iterrows():
 
 st.markdown("""
 
-### 🗺 Map Legend
+<div class="custom-card">
 
-🥇 **Gold Marker** → Best Restaurant
+<h3>🧭 Map Legend</h3>
 
-🥈 **Silver Marker** → Second Best
+| Icon | Meaning |
+|------|---------|
+| 🔵 | Your Current Location |
+| 🥇 | Best Restaurant |
+| 🥈 | Second Recommendation |
+| 🥉 | Third Recommendation |
+| 🔴 | Other Recommended Restaurants |
+| 🟢 Line | Less than 3 KM |
+| 🟠 Line | Between 3–7 KM |
+| 🔴 Line | More than 7 KM |
 
-🥉 **Bronze Marker** → Third Best
+</div>
 
-🔴 **Red Marker** → Other Recommended Restaurants
+""",
+unsafe_allow_html=True)
 
-🔵 **Blue Marker** → Your Current Location
-
-🟢 **Green Line** → Less than 3 KM
-
-🟠 **Orange Line** → 3–7 KM
-
-🔴 **Red Line** → More than 7 KM
-
-""")
 
 st_folium(
 
-    restaurant_map,
+restaurant_map,
 
-    width=1200,
+width=None,
 
-    height=650
+height=700,
+
+returned_objects=[]
 
 )
 
 
+
+st.markdown("---")
+
+st.subheader("📊 Recommendation Statistics")
+
+c1,c2,c3,c4=st.columns(4)
+
+with c1:
+
+    st.metric(
+
+        "Restaurants",
+
+        len(restaurant_scores)
+
+    )
+
+with c2:
+
+    st.metric(
+
+        "Average Rating",
+
+        f"{restaurant_scores['average_rating'].mean():.2f}"
+
+    )
+
+with c3:
+
+    st.metric(
+
+        "Average Distance",
+
+        f"{restaurant_scores['distance_km'].mean():.1f} KM"
+
+    )
+
+with c4:
+
+    st.metric(
+
+        "Average Match",
+
+        f"{restaurant_scores['match_score'].mean():.1f}%"
+
+    )
 # =====================================================
 # CONTINUE
 # =====================================================
+st.markdown("---")
 
-if st.button(
-    "➡ Continue To Feedback"
-):
+st.markdown("""
 
-    st.switch_page(
-        "pages/6_Feedback.py"
-    )
+<div class="custom-card">
+<h2 style="text-align:center">
+🎉 RECOMMENDATION COMPLETED
+</h2>
+<p style="text-align:center">
+Please continue to provide your valuable feedback.
+</p>
+</div>
+
+""",
+unsafe_allow_html=True)
+
+col1,col2,col3=st.columns([1,2,1])
+
+with col2:
+    if st.button(
+        "⭐ Continue To Feedback",
+        use_container_width=True
+    ):
+        st.switch_page(
+            "pages/6_Feedback.py"
+        )

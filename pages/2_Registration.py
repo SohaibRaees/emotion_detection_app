@@ -28,8 +28,71 @@ from database.db_connection import (
 # PAGE TITLE
 # =====================================================
 
-st.title("📝 User Registration")
+# st.title("📝 User Registration")
+from utils.ui import (
+    load_ui,
+    page_intro
+)
 
+load_ui("Registration Page")
+
+page_intro(
+    "Create Account",
+    "Join the AI Emotion-Aware Food Recommendation System.",
+    "📝"
+)
+
+# =====================================================
+# INITIALIZE REGISTRATION SESSION
+# =====================================================
+
+if "reg_step" not in st.session_state:
+    st.session_state.reg_step = 1
+
+if "account" not in st.session_state:
+    st.session_state.account = {}
+
+if "phr" not in st.session_state:
+    st.session_state.phr = {}
+
+if "profile" not in st.session_state:
+    st.session_state.profile = {}
+
+# ===============================================
+# REGISTRATION PROGRESS
+# ===============================================
+
+progress = {
+    1: 25,
+    2: 50,
+    3: 75,
+    4: 100
+}
+
+st.progress(progress[st.session_state.reg_step])
+
+step_titles = {
+    1: "👤 Account Information",
+    2: "❤️ Health Profile",
+    3: "🍽 Food Preferences",
+    4: "✅ Review & Register"
+}
+st.markdown(
+    f"""
+    <div style="
+        text-align:center;
+        font-size:22px;
+        font-weight:600;
+        color:#2563EB;
+        margin-bottom:20px;
+    ">
+        Step {st.session_state.reg_step} of 4
+        <br><br>
+        {step_titles[st.session_state.reg_step]}
+    </div>
+    """,
+    unsafe_allow_html=True
+)
 # =====================================================
 # SESSION INITIALIZATION
 # =====================================================
@@ -57,527 +120,1055 @@ def get_next_user_id():
 # STEP 1
 # ACCOUNT INFORMATION
 # =====================================================
-
 if st.session_state.reg_step == 1:
+    left,right = st.columns(2)
 
-    st.subheader("Step 1: Account Information")
+    with left:
 
-    full_name = st.text_input("Full Name")
+        full_name = st.text_input(
+            "👤 Full Name"
+        )
 
-    email = st.text_input("Email")
+        age = st.number_input(
+            "🎂 Age",
+            10,
+            100,
+            20
+        )
 
-    password = st.text_input(
-        "Password",
-        type="password"
-    )
+        gender = st.selectbox(
+            "🚻 Gender",
+            [
+                "Male",
+                "Female"
+            ]
+        )
 
-    confirm_password = st.text_input(
-        "Confirm Password",
-        type="password"
-    )
+        city = st.text_input(
+            "📍 City"
+        )
 
-    age = st.number_input(
-        "Age",
-        min_value=10,
-        max_value=100,
-        value=20
-    )
+    with right:
 
-    gender = st.selectbox(
-        "Gender",
-        ["Male", "Female"]
-    )
+        email = st.text_input(
+            "📧 Email"
+        )
 
-    city = st.text_input("City")
+        password = st.text_input(
+            "🔒 Password",
+            type="password"
+        )
 
-    occupation = st.text_input(
-        "Occupation"
-    )
+        confirm_password = st.text_input(
+            "🔑 Confirm Password",
+            type="password"
+        )
 
-    if st.button("Next ➜"):
+        occupation = st.text_input(
+            "💼 Occupation"
+        )
 
-        if not full_name.strip():
+        if st.button("Next ➜",
+                     key="step1_next"
+        ):
 
-            st.warning(
-                "⚠ Please enter Full Name."
-            )
+            if not full_name.strip():
 
-        elif not email.strip():
+                st.warning(
+                    "⚠ Please enter Full Name."
+                )
 
-            st.warning(
-                "⚠ Please enter Email."
-            )
+            elif not email.strip():
 
-        elif "@" not in email:
+                st.warning(
+                    "⚠ Please enter Email."
+                )
 
-            st.warning(
-                "⚠ Invalid Email Address."
-            )
+            elif "@" not in email:
 
-        elif len(password) < 6:
+                st.warning(
+                    "⚠ Invalid Email Address."
+                )
 
-            st.warning(
-                "⚠ Password must be at least 6 characters."
-            )
+            elif len(password) < 6:
 
-        elif password != confirm_password:
+                st.warning(
+                    "⚠ Password must be at least 6 characters."
+                )
 
-            st.warning(
-                "⚠ Passwords do not match."
-            )
+            elif password != confirm_password:
 
-        elif not city.strip():
+                st.warning(
+                    "⚠ Passwords do not match."
+                )
 
-            st.warning(
-                "⚠ Please enter City."
-            )
+            elif not city.strip():
 
-        elif not occupation.strip():
+                st.warning(
+                    "⚠ Please enter City."
+                )
 
-            st.warning(
-                "⚠ Please enter Occupation."
-            )
+            elif not occupation.strip():
 
-        else:
+                st.warning(
+                    "⚠ Please enter Occupation."
+                )
 
-            st.session_state.account = {
+            else:
 
-                "full_name": full_name,
+                st.session_state.account = {
 
-                "email": email.strip().lower(),
+                    "full_name": full_name,
 
-                "password": password,
+                    "email": email.strip().lower(),
 
-                "age": age,
+                    "password": password,
 
-                "gender": gender,
+                    "age": age,
 
-                "city": city,
+                    "gender": gender,
 
-                "occupation": occupation
+                    "city": city,
 
-            }
+                    "occupation": occupation
+
+                }
 
 
-            st.session_state.reg_step = 2
-            st.rerun()
+                st.session_state.reg_step = 2
+                st.rerun()
 
 # =====================================================
 # STEP 2
 # HEALTH PROFILE
 # =====================================================
 
-elif st.session_state.reg_step == 2:
 
-    st.subheader(
-        "Step 2: Health Profile"
-    )
+if st.session_state.reg_step == 2:
 
-    height_cm = st.number_input(
-        "Height (cm)",
-        value=170
-    )
+    left,right = st.columns(2)
+    with left:
 
-    weight_kg = st.number_input(
-        "Weight (kg)",
-        value=70
-    )
+        height_cm = st.number_input(
+            "📏 Height (cm)",
+            value=170
+        )
 
-    bmi = round(
-        weight_kg /
-        ((height_cm / 100) ** 2),
-        2
-    )
+        weight_kg = st.number_input(
+            "⚖ Weight (kg)",
+            value=70
+        )
+        
+        bmi = round(
+            weight_kg /
+            ((height_cm / 100) ** 2),
+            2
+        )
 
-    st.info(f"BMI: {bmi}")
+    with right:
 
-    has_diabetes = st.checkbox(
-        "Diabetes"
-    )
+        daily_calorie_limit = st.number_input(
+            "🔥 Daily Calories",
+            value=2000
+        )
 
-    has_hypertension = st.checkbox(
-        "Hypertension"
-    )
+        # has_diabetes = st.checkbox(
+        #     "Diabetes"
+        # )
 
-    has_heart_disease = st.checkbox(
-        "Heart Disease"
-    )
+        # has_hypertension = st.checkbox(
+        #     "Hypertension"
+        # )
 
-    has_obesity = st.checkbox(
-        "Obesity"
-    )
+        # has_heart_disease = st.checkbox(
+        #     "Heart Disease"
+        # )
 
-    allergies = st.text_area(
-        "Allergies"
-    )
+        # has_obesity = st.checkbox(
+        #     "Obesity"
+        # )
 
-    dietary_restrictions = st.text_area(
-        "Dietary Restrictions"
-    )
+        allergies = st.text_area(
+            "🥜 Allergies"
+        )
 
-    daily_calorie_limit = st.number_input(
-        "Daily Calorie Limit",
-        value=2000
-    )
+        dietary_restrictions = st.text_area(
+            "🥗 Dietary Restrictions"
+        )
 
-    col1, col2 = st.columns(2)
+        c1,c2,c3,c4 = st.columns(4)
 
-    with col1:
+        with c1:
+            has_diabetes = st.checkbox("🩸 Diabetes")
 
-        if st.button("⬅ Back"):
+        with c2:
+            has_hypertension = st.checkbox("💓 Hypertension")
 
-            st.session_state.reg_step = 1
-            st.rerun()
+        with c3:
+            has_heart_disease = st.checkbox("❤️ Heart Disease")
 
-    with col2:
+        with c4:
+            has_obesity = st.checkbox("⚖ Obesity")
 
-        if st.button("Next ➜"):
 
-            st.session_state.phr = {
+        col1, col2 = st.columns(2)
 
-                "height_cm": height_cm,
+        with col1:
 
-                "weight_kg": weight_kg,
+            if st.button("⬅ Back",key="step2_back"):
 
-                "bmi": bmi,
+                st.session_state.reg_step = 1
+                st.rerun()
 
-                "has_diabetes": has_diabetes,
+        with col2:
 
-                "has_hypertension": has_hypertension,
+            if st.button("Next ➜", key="step2_next"):
 
-                "has_heart_disease": has_heart_disease,
+                st.session_state.phr = {
 
-                "has_obesity": has_obesity,
+                    "height_cm": height_cm,
 
-                "allergies": allergies,
+                    "weight_kg": weight_kg,
 
-                "dietary_restrictions":
-                dietary_restrictions,
+                    "bmi": bmi,
 
-                "daily_calorie_limit":
-                daily_calorie_limit
-            }
+                    "has_diabetes": has_diabetes,
 
-            st.session_state.reg_step = 3
-            st.rerun()
+                    "has_hypertension": has_hypertension,
+
+                    "has_heart_disease": has_heart_disease,
+
+                    "has_obesity": has_obesity,
+
+                    "allergies": allergies,
+
+                    "dietary_restrictions":
+                    dietary_restrictions,
+
+                    "daily_calorie_limit":
+                    daily_calorie_limit
+                }
+
+                st.session_state.reg_step = 3
+                st.rerun()
 
 # =====================================================
 # STEP 3
 # FOOD PREFERENCES
 # =====================================================
+if st.session_state.reg_step == 3:
 
-elif st.session_state.reg_step == 3:
+    left,right = st.columns(2)
 
-    st.subheader(
-        "Step 3: Food Preferences"
-    )
+    with left:
 
-    income_range = st.selectbox(
-        "Income Range",
-        ["Low", "Middle", "High"]
-    )
+        income_range = st.selectbox(
+            "Income Range",
+            ["Low", "Middle", "High"]
+        )
 
-    monthly_food_budget = st.number_input(
-        "Monthly Food Budget",
-        value=1000
-    )
+        monthly_food_budget = st.number_input(
+            "Monthly Food Budget",
+            value=1000
+        )
 
-    lifestyle_type = st.selectbox(
-        "Lifestyle",
-        [
-            "Active",
-            "Moderate",
-            "Sedentary"
-        ]
-    )
+        lifestyle_type = st.selectbox(
+            "Lifestyle",
+            [
+                "Active",
+                "Moderate",
+                "Sedentary"
+            ]
+        )
 
-    personality_type = st.selectbox(
-        "Personality",
-        [
-            "Introvert",
-            "Extrovert",
-            "Ambivert"
-        ]
-    )
+        personality_type = st.selectbox(
+            "Personality",
+            [
+                "Introvert",
+                "Extrovert",
+                "Ambivert"
+            ]
+        )
 
-    favorite_cuisine = st.selectbox(
-        "Favorite Cuisine",
-        [
-            "Pakistani",
-            "Chinese",
-            "Italian",
-            "Fast Food",
-            "BBQ",
-            "Continental",
-            "Asian",
-            "Middle Eastern"
-        ]
-    )
+    with right:
+        favorite_cuisine = st.selectbox(
+            "Favorite Cuisine",
+            [
+                "Pakistani",
+                "Chinese",
+                "Italian",
+                "Fast Food",
+                "BBQ",
+                "Continental",
+                "Asian",
+                "Middle Eastern"
+            ]
+        )
 
-    favorite_taste = st.selectbox(
-        "Favorite Taste",
-        [
-            "Spicy",
-            "Sweet",
-            "Savory",
-            "Tangy",
-            "Mild"
-        ]
-    )
+        favorite_taste = st.selectbox(
+            "Favorite Taste",
+            [
+                "Spicy",
+                "Sweet",
+                "Savory",
+                "Tangy",
+                "Mild"
+            ]
+        )
 
-    meal_preference = st.selectbox(
-        "Meal Preference",
-        [
-            "Breakfast",
-            "Lunch",
-            "Dinner",
-            "Snacks",
-            "Any"
-        ]
-    )
+        meal_preference = st.selectbox(
+            "Meal Preference",
+            [
+                "Breakfast",
+                "Lunch",
+                "Dinner",
+                "Snacks",
+                "Any"
+            ]
+        )
 
-    food_temp_preference = st.selectbox(
-        "Food Temperature",
-        [
-            "Hot",
-            "Cold",
-            "Any"
-        ]
-    )
+        food_temp_preference = st.selectbox(
+            "Food Temperature",
+            [
+                "Hot",
+                "Cold",
+                "Any"
+            ]
+        )
 
-    col1, col2 = st.columns(2)
+        col1, col2 = st.columns(2)
 
-    with col1:
+        with col1:
 
-        if st.button("⬅ Back"):
+            if st.button("⬅ Back", key="step3_back"):
 
-            st.session_state.reg_step = 2
-            st.rerun()
+                st.session_state.reg_step = 2
+                st.rerun()
 
-    with col2:
+        with col2:
 
-        if st.button("Next ➜"):
+            if st.button("Next ➜", key="step3_next"):
 
-            st.session_state.profile = {
+                st.session_state.profile = {
 
-                "income_range":
-                income_range,
+                    "income_range":
+                    income_range,
 
-                "monthly_food_budget":
-                monthly_food_budget,
+                    "monthly_food_budget":
+                    monthly_food_budget,
 
-                "lifestyle_type":
-                lifestyle_type,
+                    "lifestyle_type":
+                    lifestyle_type,
 
-                "personality_type":
-                personality_type,
+                    "personality_type":
+                    personality_type,
 
-                "favorite_cuisine":
-                favorite_cuisine,
+                    "favorite_cuisine":
+                    favorite_cuisine,
 
-                "favorite_taste":
-                favorite_taste,
+                    "favorite_taste":
+                    favorite_taste,
 
-                "meal_preference":
-                meal_preference,
+                    "meal_preference":
+                    meal_preference,
 
-                "food_temp_preference":
-                food_temp_preference
-            }
+                    "food_temp_preference":
+                    food_temp_preference
+                }
 
-            st.session_state.reg_step = 4
-            st.rerun()
+                st.session_state.reg_step = 4
+                st.rerun()
 
 # =====================================================
 # STEP 4
 # REVIEW & REGISTER
 # =====================================================
 
-elif st.session_state.reg_step == 4:
+if st.session_state.reg_step == 4:
 
-    st.subheader(
-        "Step 4: Review Information"
-    )
+    st.subheader("✅ Review Your Information")
 
-    st.write(
-        st.session_state.account
-    )
+    account = st.session_state.account
+    phr = st.session_state.phr
+    profile = st.session_state.profile
 
-    st.write(
-        st.session_state.phr
-    )
+    # ==========================================
+    # ACCOUNT INFORMATION
+    # ==========================================
 
-    st.write(
-        st.session_state.profile
-    )
+    st.markdown("## 👤 Account Information")
 
     col1, col2 = st.columns(2)
 
     with col1:
 
-        if st.button("⬅ Back"):
+        st.info(f"""
+        **Full Name**
 
-            st.session_state.reg_step = 3
-            st.rerun()
+        {account["full_name"]}
+
+        ---
+
+        **Email**
+
+        {account["email"]}
+
+        ---
+
+        **Age**
+
+        {account["age"]}
+
+        ---
+
+        **Gender**
+
+        {account["gender"]}
+        """)
 
     with col2:
 
-        if st.button("Register"):
+        st.info(f"""
+        **City**
 
-            # =========================
-            # EMAIL CHECK
-            # =========================
+        {account["city"]}
 
-            email = st.session_state.account[
-                "email"
-            ]
+        ---
 
-            existing = fetch_data(
-                f"""
-                SELECT *
-                FROM Users
-                WHERE LOWER(email)=LOWER('{email}')
+        **Occupation**
+
+        {account["occupation"]}
+
+        ---
+
+        **Password**
+
+        ********
+        """)
+
+    st.markdown("---")
+
+    # ==========================================
+    # HEALTH PROFILE
+    # ==========================================
+
+    st.markdown("## ❤️ Health Profile")
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+
+        st.info(f"""
+        **Height**
+
+        {phr["height_cm"]} cm
+
+        ---
+
+        **Weight**
+
+        {phr["weight_kg"]} kg
+
+        ---
+
+        **BMI**
+
+        {phr["bmi"]}
+
+        ---
+
+        **Daily Calories**
+
+        {phr["daily_calorie_limit"]} kcal
+        """)
+
+    with col2:
+
+        st.info(f"""
+        **Diabetes**
+
+        {"✅ Yes" if phr["has_diabetes"] else "❌ No"}
+
+        ---
+
+        **Hypertension**
+
+        {"✅ Yes" if phr["has_hypertension"] else "❌ No"}
+
+        ---
+
+        **Heart Disease**
+
+        {"✅ Yes" if phr["has_heart_disease"] else "❌ No"}
+
+        ---
+
+        **Obesity**
+
+        {"✅ Yes" if phr["has_obesity"] else "❌ No"}
+        """)
+
+    st.markdown("### 🥜 Allergies")
+
+    if phr["allergies"]:
+        st.success(phr["allergies"])
+    else:
+        st.info("None")
+
+    st.markdown("### 🥗 Dietary Restrictions")
+
+    if phr["dietary_restrictions"]:
+        st.success(phr["dietary_restrictions"])
+    else:
+        st.info("None")
+
+    st.markdown("---")
+
+    # ==========================================
+    # FOOD PREFERENCES
+    # ==========================================
+
+    st.markdown("## 🍽 Food Preferences")
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+
+        st.info(f"""
+        **Income Range**
+
+        {profile["income_range"]}
+
+        ---
+
+        **Monthly Food Budget**
+
+        PKR {profile["monthly_food_budget"]}
+
+        ---
+
+        **Lifestyle**
+
+        {profile["lifestyle_type"]}
+
+        ---
+
+        **Personality**
+
+        {profile["personality_type"]}
+        """)
+
+    with col2:
+
+        st.info(f"""
+        **Favorite Cuisine**
+
+        {profile["favorite_cuisine"]}
+
+        ---
+
+        **Favorite Taste**
+
+        {profile["favorite_taste"]}
+
+        ---
+
+        **Meal Preference**
+
+        {profile["meal_preference"]}
+
+        ---
+
+        **Food Temperature**
+
+        {profile["food_temp_preference"]}
+        """)
+
+    st.markdown("---")
+
+    # ==========================================
+    # BUTTONS
+    # ==========================================
+
+    left, center, right = st.columns([1,4,1])
+
+    with left:
+
+        back = st.button("⬅ Back", key="step4_back")
+
+    with right:
+
+        register = st.button("✅ Register", key="step4_register")
+
+    if back:
+
+        st.session_state.reg_step = 3
+        st.rerun()
+
+    if register:
+
+        # =========================
+        # EMAIL CHECK
+        # =========================
+
+        email = account["email"]
+
+        existing = fetch_data(
+            f"""
+            SELECT *
+            FROM Users
+            WHERE LOWER(email)=LOWER('{email}')
+            """
+        )
+
+        if len(existing) > 0:
+
+            st.error("Email already exists.")
+
+        else:
+
+            user_id = get_next_user_id()
+
+            password_hash = bcrypt.hashpw(
+                account["password"].encode("utf-8"),
+                bcrypt.gensalt()
+            ).decode("utf-8")
+
+            # -----------------------------
+            # USERS
+            # -----------------------------
+
+            execute_query(
                 """
+                INSERT INTO Users
+                (
+                    user_id,
+                    full_name,
+                    email,
+                    age,
+                    gender,
+                    city,
+                    occupation,
+                    password_hash
+                )
+                VALUES
+                (%s,%s,%s,%s,%s,%s,%s,%s)
+                """,
+                (
+                    user_id,
+                    account["full_name"],
+                    email,
+                    account["age"],
+                    account["gender"],
+                    account["city"],
+                    account["occupation"],
+                    password_hash
+                )
             )
 
-            if len(existing) > 0:
+            # -----------------------------
+            # USER_PHR
+            # -----------------------------
 
-                st.error(
-                    "Email already exists."
+            execute_query(
+                """
+                INSERT INTO User_PHR
+                (
+                    user_id,
+                    height_cm,
+                    weight_kg,
+                    bmi,
+                    has_diabetes,
+                    has_hypertension,
+                    has_heart_disease,
+                    has_obesity,
+                    allergies,
+                    dietary_restrictions,
+                    daily_calorie_limit
                 )
-
-            else:
-
-                user_id = get_next_user_id()
-
-                password_hash = bcrypt.hashpw(
-                    st.session_state.account[
-                        "password"
-                    ].encode("utf-8"),
-                    bcrypt.gensalt()
-                ).decode("utf-8")
-
-                # =========================
-                # USERS
-                # =========================
-
-                execute_query(
-                    """
-                    INSERT INTO Users
-                    (
-                        user_id,
-                        full_name,
-                        email,
-                        age,
-                        gender,
-                        city,
-                        occupation,
-                        password_hash
-                    )
-                    VALUES
-                    (%s,%s,%s,%s,%s,%s,%s,%s)
-                    """,
-                    (
-                        user_id,
-                        st.session_state.account[
-                            "full_name"
-                        ],
-                        email,
-                        st.session_state.account[
-                            "age"
-                        ],
-                        st.session_state.account[
-                            "gender"
-                        ],
-                        st.session_state.account[
-                            "city"
-                        ],
-                        st.session_state.account[
-                            "occupation"
-                        ],
-                        password_hash
-                    )
+                VALUES
+                (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+                """,
+                (
+                    user_id,
+                    phr["height_cm"],
+                    phr["weight_kg"],
+                    phr["bmi"],
+                    phr["has_diabetes"],
+                    phr["has_hypertension"],
+                    phr["has_heart_disease"],
+                    phr["has_obesity"],
+                    phr["allergies"],
+                    phr["dietary_restrictions"],
+                    phr["daily_calorie_limit"]
                 )
+            )
 
-                # =========================
-                # USER_PHR
-                # =========================
+            # -----------------------------
+            # USER_PROFILE
+            # -----------------------------
 
-                p = st.session_state.phr
-
-                execute_query(
-                    """
-                    INSERT INTO User_PHR
-                    (
-                        user_id,
-                        height_cm,
-                        weight_kg,
-                        bmi,
-                        has_diabetes,
-                        has_hypertension,
-                        has_heart_disease,
-                        has_obesity,
-                        allergies,
-                        dietary_restrictions,
-                        daily_calorie_limit
-                    )
-                    VALUES
-                    (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
-                    """,
-                    (
-                        user_id,
-                        p["height_cm"],
-                        p["weight_kg"],
-                        p["bmi"],
-                        p["has_diabetes"],
-                        p["has_hypertension"],
-                        p["has_heart_disease"],
-                        p["has_obesity"],
-                        p["allergies"],
-                        p["dietary_restrictions"],
-                        p["daily_calorie_limit"]
-                    )
+            execute_query(
+                """
+                INSERT INTO User_Profile
+                (
+                    user_id,
+                    income_range,
+                    monthly_food_budget,
+                    lifestyle_type,
+                    personality_type,
+                    favorite_cuisine,
+                    favorite_taste,
+                    meal_preference,
+                    food_temp_preference
                 )
-
-                # =========================
-                # USER_PROFILE
-                # =========================
-
-                pr = st.session_state.profile
-
-                execute_query(
-                    """
-                    INSERT INTO User_Profile
-                    (
-                        user_id,
-                        income_range,
-                        monthly_food_budget,
-                        lifestyle_type,
-                        personality_type,
-                        favorite_cuisine,
-                        favorite_taste,
-                        meal_preference,
-                        food_temp_preference
-                    )
-                    VALUES
-                    (%s,%s,%s,%s,%s,%s,%s,%s,%s)
-                    """,
-                    (
-                        user_id,
-                        pr["income_range"],
-                        pr["monthly_food_budget"],
-                        pr["lifestyle_type"],
-                        pr["personality_type"],
-                        pr["favorite_cuisine"],
-                        pr["favorite_taste"],
-                        pr["meal_preference"],
-                        pr["food_temp_preference"]
-                    )
+                VALUES
+                (%s,%s,%s,%s,%s,%s,%s,%s,%s)
+                """,
+                (
+                    user_id,
+                    profile["income_range"],
+                    profile["monthly_food_budget"],
+                    profile["lifestyle_type"],
+                    profile["personality_type"],
+                    profile["favorite_cuisine"],
+                    profile["favorite_taste"],
+                    profile["meal_preference"],
+                    profile["food_temp_preference"]
                 )
+            )
 
-                st.success("Registration Successful!")
+            st.success("""
+🎉 Registration Completed Successfully!
 
-                st.balloons()
+Welcome to the AI Emotion-Aware Food Recommendation System.
 
-                if st.button("Go to Login"):
-                    st.switch_page("1_Login.py")
+You can now login and enjoy:
+
+✅ Emotion Detection
+
+✅ Personalized Food Recommendation
+
+✅ Nearby Restaurant Recommendation
+
+✅ Hybrid AI Recommendation Engine
+""")
+
+            st.balloons()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# if St.session_state.reg_step == 4:
+
+#     account = st.session_state.account
+#     phr = st.session_state.phr
+#     profile = st.session_state.profile
+
+#     st.subheader("📋 Review Your Information")
+
+#     # ==========================================
+#     # ACCOUNT INFORMATION
+#     # ==========================================
+
+#     st.markdown("""
+#     <div class="custom-card">
+#     <h3>👤 Account Information</h3>
+#     </div>
+#     """, unsafe_allow_html=True)
+
+#     col1, col2 = st.columns(2)
+
+#     with col1:
+
+#         st.write(f"**Full Name:** {account['full_name']}")
+#         st.write(f"**Email:** {account['email']}")
+#         st.write(f"**Age:** {account['age']} Years")
+#         st.write(f"**Gender:** {account['gender']}")
+
+#     with col2:
+
+#         st.write(f"**City:** {account['city']}")
+#         st.write(f"**Occupation:** {account['occupation']}")
+
+#     st.markdown("---")
+
+#     # ==========================================
+#     # HEALTH PROFILE
+#     # ==========================================
+
+#     st.markdown("""
+#     <div class="custom-card">
+#     <h3>❤️ Health Profile</h3>
+#     </div>
+#     """, unsafe_allow_html=True)
+
+#     col1, col2 = st.columns(2)
+
+#     with col1:
+
+#         st.write(f"**Height:** {phr['height_cm']} cm")
+#         st.write(f"**Weight:** {phr['weight_kg']} kg")
+#         st.write(f"**BMI:** {phr['bmi']}")
+#         st.write(f"**Daily Calories:** {phr['daily_calorie_limit']} kcal")
+
+#     with col2:
+
+#         st.write(
+#             f"**Diabetes:** {'✅ Yes' if phr['has_diabetes'] else '❌ No'}"
+#         )
+
+#         st.write(
+#             f"**Hypertension:** {'✅ Yes' if phr['has_hypertension'] else '❌ No'}"
+#         )
+
+#         st.write(
+#             f"**Heart Disease:** {'✅ Yes' if phr['has_heart_disease'] else '❌ No'}"
+#         )
+
+#         st.write(
+#             f"**Obesity:** {'✅ Yes' if phr['has_obesity'] else '❌ No'}"
+#         )
+
+#     st.write(
+#         f"**Allergies:** {phr['allergies'] if phr['allergies'] else 'None'}"
+#     )
+
+#     st.write(
+#         f"**Dietary Restrictions:** {phr['dietary_restrictions'] if phr['dietary_restrictions'] else 'None'}"
+#     )
+
+#     st.markdown("---")
+
+#     # ==========================================
+#     # FOOD PREFERENCES
+#     # ==========================================
+
+#     st.markdown("""
+#     <div class="custom-card">
+#     <h3>🍽 Food Preferences</h3>
+#     </div>
+#     """, unsafe_allow_html=True)
+
+#     col1, col2 = st.columns(2)
+
+#     with col1:
+
+#         st.write(f"**Income Range:** {profile['income_range']}")
+#         st.write(f"**Monthly Budget:** PKR {profile['monthly_food_budget']}")
+#         st.write(f"**Lifestyle:** {profile['lifestyle_type']}")
+#         st.write(f"**Personality:** {profile['personality_type']}")
+
+#     with col2:
+
+#         st.write(f"**Favorite Cuisine:** {profile['favorite_cuisine']}")
+#         st.write(f"**Favorite Taste:** {profile['favorite_taste']}")
+#         st.write(f"**Meal Preference:** {profile['meal_preference']}")
+#         st.write(f"**Food Temperature:** {profile['food_temp_preference']}")
+
+#     st.markdown("---")
+
+#     # ==========================================
+#     # NAVIGATION BUTTONS
+#     # ==========================================
+
+#     left, middle, right = st.columns([1, 5, 1])
+
+#     with left:
+
+#         back = st.button("⬅ Back")
+
+#     with right:
+
+#         register = st.button("✅ Register")
+
+#     if back:
+
+#         st.session_state.reg_step = 3
+#         st.rerun()
+
+#     # ==========================================
+#     # REGISTER USER
+#     # ==========================================
+
+#     if register:
+
+#         # =========================
+#         # EMAIL CHECK
+#         # =========================
+
+#         email = account["email"]
+
+#         existing = fetch_data(
+#             f"""
+#             SELECT *
+#             FROM Users
+#             WHERE LOWER(email)=LOWER('{email}')
+#             """
+#         )
+
+#         if len(existing) > 0:
+
+#             st.error("Email already exists.")
+
+#         else:
+
+#             user_id = get_next_user_id()
+
+#             password_hash = bcrypt.hashpw(
+#                 account["password"].encode("utf-8"),
+#                 bcrypt.gensalt()
+#             ).decode("utf-8")
+
+#             # =========================
+#             # USERS
+#             # =========================
+
+#             execute_query(
+#                 """
+#                 INSERT INTO Users
+#                 (
+#                     user_id,
+#                     full_name,
+#                     email,
+#                     age,
+#                     gender,
+#                     city,
+#                     occupation,
+#                     password_hash
+#                 )
+#                 VALUES
+#                 (%s,%s,%s,%s,%s,%s,%s,%s)
+#                 """,
+#                 (
+#                     user_id,
+#                     account["full_name"],
+#                     email,
+#                     account["age"],
+#                     account["gender"],
+#                     account["city"],
+#                     account["occupation"],
+#                     password_hash
+#                 )
+#             )
+
+#             # =========================
+#             # USER_PHR
+#             # =========================
+
+#             execute_query(
+#                 """
+#                 INSERT INTO User_PHR
+#                 (
+#                     user_id,
+#                     height_cm,
+#                     weight_kg,
+#                     bmi,
+#                     has_diabetes,
+#                     has_hypertension,
+#                     has_heart_disease,
+#                     has_obesity,
+#                     allergies,
+#                     dietary_restrictions,
+#                     daily_calorie_limit
+#                 )
+#                 VALUES
+#                 (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+#                 """,
+#                 (
+#                     user_id,
+#                     phr["height_cm"],
+#                     phr["weight_kg"],
+#                     phr["bmi"],
+#                     phr["has_diabetes"],
+#                     phr["has_hypertension"],
+#                     phr["has_heart_disease"],
+#                     phr["has_obesity"],
+#                     phr["allergies"],
+#                     phr["dietary_restrictions"],
+#                     phr["daily_calorie_limit"]
+#                 )
+#             )
+
+#             # =========================
+#             # USER_PROFILE
+#             # =========================
+
+#             execute_query(
+#                 """
+#                 INSERT INTO User_Profile
+#                 (
+#                     user_id,
+#                     income_range,
+#                     monthly_food_budget,
+#                     lifestyle_type,
+#                     personality_type,
+#                     favorite_cuisine,
+#                     favorite_taste,
+#                     meal_preference,
+#                     food_temp_preference
+#                 )
+#                 VALUES
+#                 (%s,%s,%s,%s,%s,%s,%s,%s,%s)
+#                 """,
+#                 (
+#                     user_id,
+#                     profile["income_range"],
+#                     profile["monthly_food_budget"],
+#                     profile["lifestyle_type"],
+#                     profile["personality_type"],
+#                     profile["favorite_cuisine"],
+#                     profile["favorite_taste"],
+#                     profile["meal_preference"],
+#                     profile["food_temp_preference"]
+#                 )
+#             )
+
+#             st.success("""
+# 🎉 Registration Completed Successfully!
+
+# Welcome to the AI Emotion-Aware Food Recommendation System.
+
+# You can now enjoy:
+
+# ✅ Emotion Detection
+
+# ✅ Personalized Food Recommendation
+
+# ✅ Nearby Restaurant Recommendation
+
+# ✅ AI Hybrid Recommendation Engine
+# """)
+
+#             st.balloons()
+
+#             if st.button("🔐 Go To Login"):
+
+#                 st.session_state.clear()
+
+#                 st.switch_page("pages/1_Login.py")

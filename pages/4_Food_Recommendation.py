@@ -60,9 +60,26 @@ emotion_id = st.session_state.get(
 # PAGE HEADER
 # =====================================================
 
-st.title(
-    "🍽 Personalized Food Recommendations"
+# st.title(
+#     "🍽 Personalized Food Recommendations"
+# )
+from utils.ui import (
+    load_ui,
+    page_intro
 )
+
+load_ui("Food Recommendations")
+
+page_intro(
+
+    "Food Recommendation",
+
+    "Hybrid AI engine generating personalized meal suggestions.",
+
+    "🍔"
+
+)
+
 
 st.success(
     f"Current Emotion: {emotion}"
@@ -70,7 +87,7 @@ st.success(
 
 st.info(
     f"Confidence: {confidence*100:.2f}%"
-)
+)   
 
 # =====================================================
 # GENERATE RECOMMENDATIONS
@@ -88,15 +105,14 @@ with st.spinner(
     )
 
 # =====================================================
-# DISPLAY TABLE
+# DISPLAY COLUMNS
 # =====================================================
-
-st.subheader(
-    "🏆 Top Food Recommendations"
-)
 
 display_columns = [
     "food_name",
+    "cuisine_type",
+    "base_price",
+    "calories_per_serving",
     "emotion_score",
     "pref_score",
     "user_cf_score",
@@ -111,49 +127,216 @@ available_columns = [
     if col in recommendations.columns
 ]
 
-st.dataframe(
-    recommendations[
-        available_columns
-    ],
-    use_container_width=True
-)
 
-# =====================================================
-# FOOD CARDS
-# =====================================================
+col1, col2, col3, col4 = st.columns(4)
+
+with col1:
+    st.metric(
+        "Foods Found",
+        len(recommendations)
+    )
+
+with col2:
+    st.metric(
+        "Emotion",
+        emotion
+    )
+
+with col3:
+    st.metric(
+        "Best Score",
+        f"{recommendations.iloc[0]['final_score']:.2f}"
+    )
+
+with col4:
+    st.metric(
+        "Top Cuisine",
+        recommendations.iloc[0]["cuisine_type"]
+    )
 
 st.markdown("---")
+
+# =====================================================
+# DISPLAY TABLE
+# =====================================================
+
+st.subheader("🏆 Personalized Food Recommendations")
+
+with st.expander("📊 View Recommendation Scores (Optional)"):
+
+    st.dataframe(
+        recommendations[
+            available_columns
+        ],
+        use_container_width=True
+    )
+
+# =====================================================
+# PREMIUM FOOD CARDS
+# =====================================================
+
+medals = [
+    "🥇",
+    "🥈",
+    "🥉",
+    "4️⃣",
+    "5️⃣",
+    "6️⃣",
+    "7️⃣",
+    "8️⃣",
+    "9️⃣",
+    "🔟"
+]
 
 for rank, (_, row) in enumerate(
     recommendations.iterrows(),
     start=1
 ):
 
-    st.container()
+    medal = medals[rank-1]
+
+    score = float(row["final_score"])
+
+    score_percent = min(score * 100, 100)
+
+    badges = []
+
+    badges.append(f"🍽 {row['cuisine_type']}")
+
+    if "taste_profile" in row:
+        badges.append(f"😋 {row['taste_profile']}")
+
+    badges.append("❤️ Emotion Match")
+
+    if row["calories_per_serving"] <= 350:
+        badges.append("🥗 Healthy")
+
+    if row["base_price"] <= 700:
+        badges.append("💰 Budget Friendly")
+
+    badge_html = "".join(
+        [
+            f"<span class='food-badge'>{b}</span>"
+            for b in badges
+        ]
+    )
 
     st.markdown(
         f"""
-### #{rank} {row['food_name']}
+<div class="food-card">
 
-**Cuisine:** {row['cuisine_type']}
+<div style="
+display:flex;
+justify-content:space-between;
+align-items:center;">
 
-**Price:** PKR {row['base_price']}
+<div>
 
-**Calories:** {row['calories_per_serving']}
+<div class="food-title">
 
-**Final Score:** {row['final_score']:.4f}
+{medal} {row['food_name']}
 
----
-"""
+</div>
+
+<div style="color:#64748B;">
+
+Recommended because it matches your current emotion and profile.
+
+</div>
+
+</div>
+
+<div class="food-score">
+
+{score_percent:.0f}%
+
+</div>
+
+</div>
+
+<br>
+
+<div style="
+display:flex;
+justify-content:space-between;
+flex-wrap:wrap;
+font-size:15px;">
+
+<div>
+
+💰 <b>PKR {row['base_price']:.0f}</b>
+
+</div>
+
+<div>
+
+🔥 <b>{row['calories_per_serving']} kcal</b>
+
+</div>
+
+<div>
+
+🍗 <b>{row['protein_g']} g Protein</b>
+
+</div>
+
+<div>
+
+🥖 <b>{row['carbs_g']} g Carbs</b>
+
+</div>
+
+<div>
+
+🧈 <b>{row['fat_g']} g Fat</b>
+
+</div>
+
+</div>
+
+<br>
+
+<div class="food-progress">
+
+<div
+
+class="food-progress-fill"
+
+style="width:{score_percent}%">
+
+</div>
+
+</div>
+
+<br>
+
+{badge_html}
+
+</div>
+
+""",
+        unsafe_allow_html=True
     )
-
 # =====================================================
 # SAVE RECOMMENDATION SESSION
 # =====================================================
 
-if st.button(
-    "💾 Save Recommendation Session"
-):
+left, right = st.columns(2)
+with left:
+
+    save_clicked = st.button(
+        "💾 Save Recommendation Session",
+        use_container_width=True
+    )
+
+with right:
+
+    continue_clicked = st.button(
+        "🍴 View Nearby Restaurants",
+        use_container_width=True
+    )
+
+if save_clicked:
 
     if emotion_id is None:
 
@@ -248,9 +431,7 @@ if st.button(
 
 st.markdown("---")
 
-if st.button(
-    "➡ Continue To Restaurant Recommendation"
-):
+if continue_clicked:
 
     st.switch_page(
         "pages/5_Restaurant_Recommendation.py"
